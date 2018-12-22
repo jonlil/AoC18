@@ -29,7 +29,7 @@ struct Event {
 
 impl Event {
     fn new(value: &str) -> Result<Event, &'static str> {
-        event = parse_shift_log(value)?
+        let event = parse_shift_log(value)?;
         Ok(event)
     }
 
@@ -44,6 +44,7 @@ impl Event {
     }
 }
 
+#[derive(Hash, Eq, PartialEq, Debug, Clone)]
 enum GuardEvent {
     WakesUp,
     FallsAsleep,
@@ -53,7 +54,7 @@ enum GuardEvent {
 #[derive(Hash, Eq, PartialEq, Debug, Clone)]
 struct Guard {
     id: u32,
-    events: Vec<String>,
+    events: Vec<Event>,
 }
 
 impl Guard {
@@ -118,12 +119,11 @@ pub fn run(config: Config) {
     let mut guards: HashMap<u32, Guard> = HashMap::new();
     let mut current_id: u32 = 0;
 
-    println!("{:?}", guards);
     // TODO: Simplify
     for event in contents.lines().into_iter().map(parse_shift_log) {
         let e = event.unwrap();
 
-        match e.getType() {
+        match e.kind {
             GuardEvent::StartsShift => {
                 match parse_guard_from_message(&e.message) {
                     Ok(mut g) => {
@@ -133,7 +133,7 @@ pub fn run(config: Config) {
                             Some(mut g) => g.events.push(e),
                             None => {
                                 g.events.push(e);
-                                guards.insert(g);
+                                guards.insert(g.id, g);
                             }
                         }
                     },
