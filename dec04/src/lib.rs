@@ -55,7 +55,7 @@ enum GuardEvent {
 #[derive(Hash, Eq, PartialEq, Debug, Clone)]
 struct Guard {
     id: u32,
-    sleeping_minutes: Vec<i64>,
+    sleeping_minutes: Vec<u64>,
     total_sleep: u64,
     events: Vec<Event>,
 }
@@ -64,10 +64,24 @@ impl Guard {
     fn new(id: u32) -> Guard {
         Guard {
             id: id,
-            sleeping_minutes: vec![0i64; 59],
+            sleeping_minutes: vec![0u64; 59],
             total_sleep: 0_u64,
             events: Vec::new()
         }
+    }
+
+    fn get_sleepiest_min(&self) -> (usize, u64) {
+        let mut favorite: (usize, u64) = (0 as usize, 0u64);
+        for (min, times) in self.sleeping_minutes.iter().enumerate() {
+            if times > &favorite.1 {
+                favorite = (
+                    min.to_owned(),
+                    times.to_owned(),
+                );
+            }
+        }
+
+        favorite
     }
 
     fn calculate_sleep(&mut self) {
@@ -88,15 +102,6 @@ impl Guard {
                 },
                 GuardEvent::StartsShift => {}
             }
-
-            //println!("EventType: {:?} EventTime: {}:{}", event.kind, event.hour, event.min);
-        }
-
-        println!("GuardID: {}\n Total sleep: {}",
-            self.id,
-            self.total_sleep);
-        for (key, value) in self.sleeping_minutes.iter().enumerate() {
-            println!("{}: {}", key, value)
         }
     }
 }
@@ -199,14 +204,10 @@ pub fn run(_config: Config) {
         }
     };
 
-    guards.get_mut(&2953_u32).unwrap().calculate_sleep();
-    // for guard in guards.values_mut() {
-    //     &guard.calculate_sleep();
-    // }
-}
-
-fn sleep_time() {
-    // 50 - 30 = 20
-    // 9 - 0 = 9
-    //end - start
+    for guard in guards.values_mut() {
+        &guard.calculate_sleep();
+        println!("Guard:ID {}, {:?}",
+            guard.id,
+            &guard.get_sleepiest_min());
+    }
 }
