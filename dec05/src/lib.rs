@@ -129,6 +129,8 @@ pub fn run(_config: Config) {
 
         for pair in pairs {
             index += 1 as usize;
+
+            // skip, previous iteration reacted
             if has_reacted == true {
                 has_reacted = false;
                 continue;
@@ -140,6 +142,7 @@ pub fn run(_config: Config) {
             if !can_react(&a, &b) {
                 results += &a.to_owned();
             } else {
+                // If a and b reacted we must skip the next iteration.
                 has_reacted = true;
             }
 
