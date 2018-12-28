@@ -9,5 +9,5 @@ fn main() {
         process::exit(1);
     });
 
-    dec05::run(config);
+    dec05::run_part2();
 }

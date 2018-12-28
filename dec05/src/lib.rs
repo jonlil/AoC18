@@ -1,6 +1,7 @@
 use std::fs;
 use std::str::FromStr;
 use std::str;
+use std::collections::HashMap;
 
 #[cfg(test)]
 mod tests {
@@ -112,14 +113,56 @@ impl Iterator for Pairs {
     }
 }
 
-pub fn run(_config: Config) {
+pub fn run_part1() {
     let mut contents = fs::read_to_string("seed")
         .expect("something went wrong reading the file");
 
-    let mut done: bool = false;
+    let result = run(contents);
 
+    println!("{}", result);
+}
+
+pub fn run_part2() {
+    let mut result: HashMap<String, usize> = HashMap::new();
+    let contents = fs::read_to_string("seed")
+        .expect("something went wrong reading the file");
+
+    for char in contents.chars()
+        .map(|x| x.to_uppercase().to_string())
+        .filter(|x| x.to_string().as_bytes() != &[10_u8]) {
+        match result.get_mut(&char) {
+            Some(c) => {
+                *c += 1;
+            },
+            None => {
+                result.insert(char, 1 as usize);
+            },
+        }
+    }
+
+    for (k, r) in result.iter() {
+        let mut reduced_complex_pair: String = contents.chars()
+            .filter(|x| {
+                if x.to_uppercase().to_string() == k.to_string() {
+                    false
+                } else if x.to_string().as_bytes() == &[10_u8] {
+                    false
+                } else {
+                    true
+                }
+            })
+            .collect();
+
+        let mut initial_length = reduced_complex_pair.len();
+        let final_len = run(reduced_complex_pair);
+        println!("Removed type: {:?}, fully reacting result: {}", k, final_len.len());
+    }
+}
+
+pub fn run(mut contents: String) -> String {
     let pairs = Pairs::new(contents.as_bytes().to_vec());
 
+    let mut done: bool = false;
     while !done {
         let pairs = Pairs::new(contents.as_bytes().to_vec());
         let prev_length = pairs.len().to_owned();
@@ -157,5 +200,5 @@ pub fn run(_config: Config) {
         contents = results.to_owned();
     }
 
-    println!("{}", contents);
+    return contents.to_owned();
 }
