@@ -1,35 +1,57 @@
+mod grid;
+
 use std::fs;
 use std::str::FromStr;
 use regex::Regex;
+use self::grid::Grid2D;
+use std::cmp;
 
-#[derive(Debug)]
-struct Point<T> {
-    x: T,
-    y: T,
-}
+#[cfg(test)]
+mod tests {
+    use crate::{
+        Point,
+        get_edge_coordinates,
+    };
 
-#[derive(Debug)]
-struct Grid {
-    boundry: (
-        Point<i32>,
-        Point<i32>,
-    )
-}
+    fn distance_between_coordinates(p1: (i32, i32), p2: (i32, i32)) -> i32 {
+        Point {
+            x: p1.0,
+            y: p1.1,
+        }.manhattan_distance(Point {
+            x: p2.0,
+            y: p2.1,
+        })
+    }
 
-impl Grid {
-    fn new(b1: Point<i32>, b2: Point<i32>) -> Grid {
-        Grid { boundry: (b1, b2) }
+    #[test]
+    fn it_calculates_distance() {
+        assert_eq!(distance_between_coordinates((1, 1), (1, 1)), 0);
+        assert_eq!(distance_between_coordinates((2, 1), (1, 1)), 1);
+        assert_eq!(distance_between_coordinates((1, 1), (2, 1)), 1);
+    }
+
+    #[test]
+    fn it_calculate_grid_boundries() {
+        assert_eq!(get_edge_coordinates(&vec![
+            Point { x: 1, y: 1 },
+            Point { x: 1, y: 6 },
+            Point { x: 8, y: 3 },
+            Point { x: 3, y: 4 },
+            Point { x: 5, y: 5 },
+            Point { x: 8, y: 9 },
+        ]), (9, 9))
     }
 }
 
-impl Iterator for Grid {
-    type Item = Point<i32>;
+#[derive(Debug)]
+struct Point {
+    x: i32,
+    y: i32,
+}
 
-    fn next(&mut self) -> Option<Self::Item> {
-        Some( Point {
-            x: 0,
-            y: 0,
-        } )
+impl Point {
+    fn manhattan_distance(&self, p2: Point) -> i32 {
+        ((self.x - p2.x) + (self.y - p2.y)).abs()
     }
 }
 
@@ -37,7 +59,7 @@ fn read_seed_file() -> String {
     fs::read_to_string("seed").expect("something went wrong reading the file")
 }
 
-fn parse_points(line: &str, index: u8) -> Point<i32> {
+fn parse_points(line: &str, index: u8) -> Point {
     let re = Regex::new(r"(?P<x>\d+),\s{1}(?P<y>\d+)").unwrap();
 
     match re.captures(line) {
@@ -51,8 +73,8 @@ fn parse_points(line: &str, index: u8) -> Point<i32> {
     }
 }
 
-fn get_points() -> Result<Vec<Point<i32>>, &'static str> {
-    let mut points: Vec<Point<i32>> = Vec::new();
+fn get_points() -> Result<Vec<Point>, &'static str> {
+    let mut points: Vec<Point> = Vec::new();
     let mut index: u8 = 0;
 
     Ok( read_seed_file().lines().map(|x| {
@@ -61,18 +83,30 @@ fn get_points() -> Result<Vec<Point<i32>>, &'static str> {
     }).collect() )
 }
 
+fn get_edge_coordinates(points: &Vec<Point>) -> (i32, i32) {
+    let x = points.iter().map(|c| { c.x } ).max().unwrap();
+    let y = points.iter().map(|c| { c.y } ).max().unwrap();
+
+    (cmp::max(x, y), cmp::max(x, y))
+}
+
 fn main() {
     let points = get_points().unwrap();
+    let grid_offset = get_edge_coordinates(&points);
 
-    let greatest_x = &points.iter().map(|c| { c.x } ).max().unwrap();
-    let smallest_x = &points.iter().map(|c| { c.x } ).min().unwrap();
-    let greatest_y = &points.iter().map(|c| { c.y } ).max().unwrap();
-    let smallest_y = &points.iter().map(|c| { c.y } ).min().unwrap();
-
-    let grid = Grid::new(
-        Point { x: (*smallest_x - 1), y: (*smallest_y - 1) },
-        Point { x: (*greatest_x + 1), y: (*greatest_y + 1) },
+    let mut grid = Grid2D::new_sized(
+        grid_offset.0 as usize,
+        grid_offset.1 as usize,
+        &0_i32,
     );
 
-    println!("{:?}", grid);
+    let p1 = Point {
+        x: 5,
+        y: 5,
+    };
+
+    println!("{}", p1.manhattan_distance(Point {
+        x: 6,
+        y: 5,
+    }));
 }
